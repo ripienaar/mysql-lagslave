@@ -100,7 +100,7 @@ def manage_slave(options)
         slave = dbh.query("show slave status").fetch_hash
         age = heartbeat["seconds"].to_i
     
-        @log.info("Slave currently #{age} seconds behind master") if itr == 0
+        @log.info("Slave currently #{age} seconds behind master desired lag is #{options[:lag]} seconds}") if itr % 120 == 0
 
         if slave["Slave_SQL_Running"] == "Yes"
             if age < options[:lag] 
