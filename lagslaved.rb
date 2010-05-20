@@ -141,6 +141,11 @@ else
     @log.level = Logger::INFO
 end
 
+Signal.trap("TERM") do
+    @log.info("Received TERM signal, terminating")
+    exit!
+end
+
 options.each_pair {|k,v| @log.debug("#{k} => #{v}")}
 
 if options[:daemonize]
