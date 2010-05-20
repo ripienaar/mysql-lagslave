@@ -54,11 +54,12 @@ begin
 
     if range.include?(age)
         puts "OK: #{age} seconds behind master|lag=#{age}" 
-        exit! 0
+        exit
     else
         puts "CRITICAL: #{age} seconds behind master|lag=#{age}" 
-        exit! 2
+        exit 2
     end
+rescue exit
 rescue Exception => e
     puts "UNKNOWN: #{e}"
     exit 3
