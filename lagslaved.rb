@@ -22,7 +22,7 @@ options = {:lag => 3600,
            :password => "",
            :daemonize => false,
            :debug => false,
-	   :interval => 1,
+           :interval => 1,
            :logfile => "/dev/stdout",
            :pidfile => "/var/run/lagslaved.pid"}
 
@@ -65,7 +65,7 @@ parser.on('-d', '--daemonize', 'Run in the backgroun') do |f|
 end
 
 parser.on('--logfile LOGFILE', 'Logfile to write') do |f|
-    options[:pidfile] = f
+    options[:logfile] = f
 end
 
 parser.on('-v', '--debug', 'Log at debug level') do |f|
@@ -93,11 +93,15 @@ end
 def manage_slave(options)
     dbh = Mysql.real_connect(options[:host], options[:user], options[:password], options[:database])
 
+    itr = 0
+
     loop do
         heartbeat = dbh.query("select now() - ts as seconds from heartbeat").fetch_hash
         slave = dbh.query("show slave status").fetch_hash
         age = heartbeat["seconds"].to_i
     
+        @log.info("Slave currently #{age} seconds behind master") if itr == 0
+
         if slave["Slave_SQL_Running"] == "Yes"
             if age < options[:lag] 
                 @log.info "Slave running #{age} behind: needs to stop"
@@ -115,6 +119,7 @@ def manage_slave(options)
             end
         end
     
+        itr += 1
         sleep options[:interval]
     end
 end

@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# Init file for the lagslaved daemon
+#
+# chkconfig: 2345 70 20
+# description: This daemon manages a MySQL slave causing it to lag behind its master
+#
+# processname: lagslaved
+# pidfile: /var/run/lagslaved.pid
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+RETVAL=0
+prog="lagslaved"
+desc="lagslaved"
+
+LAGSLAVED_OPTIONS=""
+
+if [ -r /etc/sysconfig/$prog ]; then
+	source /etc/sysconfig/$prog
+fi
+
+start() {
+	echo -n $"Starting $desc: "
+	daemon --check=$prog ${prog} ${LAGSLAVED_OPTIONS}
+	RETVAL=$?
+	echo 
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
+	return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping $desc: "
+	killproc $prog
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog
+	return $RETVAL
+}
+
+restart() {
+  	stop
+	start
+}
+
+case "$1" in
+  start)
+  	start
+	;;
+  stop)
+  	stop
+	;;
+  restart)
+  	restart
+	;;
+  condrestart)
+	[ -e /var/lock/subsys/$prog ] && restart
+	RETVAL=$?
+	;;
+  status)
+	status $prog
+	RETVAL=$?
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart|condrestart|status}"
+	RETVAL=1
+esac
+
+exit $RETVAL
