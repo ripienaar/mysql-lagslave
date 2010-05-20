@@ -60,7 +60,7 @@ parser.on('--pid PIDFILE', 'Pidfile to write') do |f|
     options[:pidfile] = f
 end
 
-parser.on('-d', '--daemonize', 'Run in the backgroun') do |f|
+parser.on('--daemonize', 'Run in the backgroun') do |f|
     options[:daemonize] = f
 end
 
