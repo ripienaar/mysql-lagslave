@@ -54,9 +54,13 @@ begin
 
     if range.include?(age)
         puts "OK: #{age} seconds behind master|lag=#{age}" 
+        STDOUT.flush
+
         exit! 0
     else
         puts "CRITICAL: #{age} seconds behind master|lag=#{age}" 
+        STDOUT.flush
+
         exit! 2
     end
 rescue Exception => e
