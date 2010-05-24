@@ -13,7 +13,7 @@ options = {:user => 'nagios',
            :host => "localhost",
            :password => "",
            :logfile => "/dev/stdout",
-           :range => 39600..46800 }#Plus/minus one hour for a default lag of 12 hours.
+           :range => "39600:46800" }#Plus/minus one hour for a default lag of 12 hours.
         
 parser = OptionParser.new
 
@@ -50,17 +50,22 @@ begin
     age = heartbeat["seconds"].to_i
 
     rng = options[:range].split(':')
+    lowend = rng[0].to_i
+    highend = rng[1].to_i
     range = Range.new(rng[0].to_i, rng[1].to_i)
 
     if range.include?(age)
-        puts "OK: #{age} seconds behind master|lag=#{age}" 
+        puts "OK: #{age} is inbetween Max:[#{rng[1]}] and Min:#{rng[0]}|lag=#{age}" 
         STDOUT.flush
-
         exit! 0
-    else
-        puts "CRITICAL: #{age} seconds behind master|lag=#{age}" 
-        STDOUT.flush
 
+    else
+        if age < lowend
+            puts "CRITICAL: #{lowend - age} seconds faster than allowed|lag=#{age}" 
+        elsif age > highend
+            puts "CRITICAL: #{age - highend} seconds slower than allowed. |lag=#{age}" 
+        end
+        STDOUT.flush
         exit! 2
     end
 rescue Exception => e
