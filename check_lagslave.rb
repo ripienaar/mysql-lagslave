@@ -46,7 +46,7 @@ begin
 
     dbh = Mysql.real_connect(options[:host], options[:user], options[:password], options[:database])
 
-    heartbeat = dbh.query("select now() - ts as seconds from heartbeat").fetch_hash
+    heartbeat = dbh.query("select unix_timestamp(now()) - unix_timestamp(ts) as seconds from heartbeat").fetch_hash
     age = heartbeat["seconds"].to_i
 
     rng = options[:range].split(':')

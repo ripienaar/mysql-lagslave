@@ -96,7 +96,7 @@ def manage_slave(options)
     itr = 0
 
     loop do
-        heartbeat = dbh.query("select now() - ts as seconds from heartbeat").fetch_hash
+        heartbeat = dbh.query("select unix_timestamp(now()) - unix_timestamp(ts) as seconds, ts from heartbeat").fetch_hash
         slave = dbh.query("show slave status").fetch_hash
         age = heartbeat["seconds"].to_i
     
@@ -104,18 +104,18 @@ def manage_slave(options)
 
         if slave["Slave_SQL_Running"] == "Yes"
             if age < options[:lag] 
-                @log.info "Slave running #{age} behind: needs to stop"
+                @log.info "Slave running #{age} seconds behind: needs to stop"
                 dbh.query("stop slave SQL_THREAD")
             else
-                @log.debug "Slave running #{age} behind: keeping it running"
+                @log.debug "Slave running #{age} seconds behind: keeping it running"
             end
         else
             # if it's lag + 90 seconds behind start it
             if age > options[:lag] + 90
-                @log.info "Slave stopped #{age} behind: needs to start"
+                @log.info "Slave stopped #{age} seconds behind: needs to start"
                 dbh.query("start slave")
             else
-                @log.debug "Slave stopped #{age} behind: keeping it stopped"
+                @log.debug "Slave stopped #{age} seconds behind: keeping it stopped"
             end
         end
     
