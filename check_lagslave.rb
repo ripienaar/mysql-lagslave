@@ -10,6 +10,7 @@ require 'optparse'
 
 options = {:user => 'nagios',
            :database => 'heartbeat',
+           :table => 'heartbeat',
            :host => "localhost",
            :password => "",
            :logfile => "/dev/stdout",
@@ -23,6 +24,10 @@ parser.separator ""
 
 parser.on('-u', '--user USER', 'User to connect as') do |f|
     options[:user] = f
+end
+
+parser.on('-t', '--table TABLE', 'Heartbeat table') do |f|
+    options[:table] = f
 end
 
 parser.on('-d', '--database DATABASE', 'Heartbeat database') do |f|
@@ -46,7 +51,7 @@ begin
 
     dbh = Mysql.real_connect(options[:host], options[:user], options[:password], options[:database])
 
-    heartbeat = dbh.query("select unix_timestamp(now()) - unix_timestamp(ts) as seconds from heartbeat").fetch_hash
+    heartbeat = dbh.query("select unix_timestamp(now()) - unix_timestamp(ts) as seconds from #{options[:table]}").fetch_hash
     age = heartbeat["seconds"].to_i
 
     rng = options[:range].split(':')
