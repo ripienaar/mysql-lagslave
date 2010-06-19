@@ -60,7 +60,7 @@ begin
     range = Range.new(rng[0].to_i, rng[1].to_i)
 
     if range.include?(age)
-        puts "OK: #{age} is inbetween Max:[#{rng[1]}] and Min:#{rng[0]}|lag=#{age}" 
+        puts "OK: #{age} is inbetween Max:#{rng[1]} and Min:#{rng[0]}|lag=#{age}" 
         STDOUT.flush
         exit! 0
 
