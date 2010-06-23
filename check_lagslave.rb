@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 
 # Simple script to monitor lagslave delays with
-# nagios based on the age of a heartbeat time stamp 
+# nagios based on the age of a heartbeat time stamp
 # and an acceptible range.
 
 require 'rubygems'
@@ -13,9 +13,10 @@ options = {:user => 'nagios',
            :table => 'heartbeat',
            :host => "localhost",
            :password => "",
+           :mode => :nagios,
            :logfile => "/dev/stdout",
            :range => "39600:46800" }#Plus/minus one hour for a default lag of 12 hours.
-        
+
 parser = OptionParser.new
 
 parser.separator ""
@@ -46,6 +47,18 @@ parser.on('-r', '--range RANGE', 'Set acceptable delay range') do |f|
     options[:range] = f
 end
 
+parser.on('-m', '--mode MODE', 'Sets output mode either cacti or nagios') do |f|
+    case f
+        when "nagios"
+            options[:mode] = :nagios
+        when "cacti"
+            options[:mode] = :cacti
+        else
+            puts "Unsupported output mode #{f} should be 'nagios' or 'cacti'"
+            exit 3
+    end
+end
+
 begin
     parser.parse!
 
@@ -59,19 +72,23 @@ begin
     highend = rng[1].to_i
     range = Range.new(rng[0].to_i, rng[1].to_i)
 
-    if range.include?(age)
-        puts "OK: #{age} is inbetween Max:#{rng[1]} and Min:#{rng[0]}|lag=#{age}" 
-        STDOUT.flush
-        exit! 0
+    if options[:mode] == :nagios
+        if range.include?(age)
+            puts "OK: #{age} is inbetween Max:#{rng[1]} and Min:#{rng[0]}|lag=#{age}"
+            STDOUT.flush
+            exit! 0
 
-    else
-        if age < lowend
-            puts "CRITICAL: #{lowend - age} seconds faster than allowed|lag=#{age}" 
-        elsif age > highend
-            puts "CRITICAL: #{age - highend} seconds slower than allowed. |lag=#{age}" 
+        else
+            if age < lowend
+                puts "CRITICAL: #{lowend - age} seconds faster than allowed|lag=#{age}"
+            elsif age > highend
+                puts "CRITICAL: #{age - highend} seconds slower than allowed. |lag=#{age}"
+            end
+            STDOUT.flush
+            exit! 2
         end
-        STDOUT.flush
-        exit! 2
+    else
+        puts "lag:#{age} low:#{lowend} high:#{highend}"
     end
 rescue Exception => e
     puts "UNKNOWN: #{e}"
