@@ -24,6 +24,7 @@ options = {:lag => 3600,
            :daemonize => false,
            :debug => false,
            :interval => 1,
+           :graceperiod => 90,
            :logfile => "/dev/stdout",
            :pidfile => "/var/run/lagslaved.pid"}
 
@@ -35,6 +36,10 @@ parser.separator ""
 
 parser.on('-l', '--lag LAG', 'Desired delay behind master') do |f|
     options[:lag] = f.to_i
+end
+
+parser.on('-g', '--grace GRACE', 'Seconds after desired lag to wait before starting slave') do |f|
+    options[:graceperiod] = f.to_i
 end
 
 parser.on('-i', '--interval INTERVAL', 'Interval between slave status checks') do |f|
@@ -115,8 +120,8 @@ def manage_slave(options)
                 @log.debug "Slave running #{age} seconds behind: keeping it running"
             end
         else
-            # if it's lag + 90 seconds behind start it
-            if age > options[:lag] + 90
+            # if it's lag + grace seconds behind start it
+            if age > options[:lag] + options[:graceperiod]
                 @log.info "Slave stopped #{age} seconds behind: needs to start"
                 dbh.query("start slave")
             else
