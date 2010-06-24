@@ -74,7 +74,7 @@ begin
 
     if options[:mode] == :nagios
         if range.include?(age)
-            puts "OK: #{age} is inbetween Max:#{rng[1]} and Min:#{rng[0]}|lag=#{age}"
+            puts "OK: #{age} is between Max:#{rng[1]} and Min:#{rng[0]}|lag=#{age}"
             STDOUT.flush
             exit! 0
 
