@@ -1,13 +1,13 @@
 #!/usr/bin/ruby
 
-# Simple script to stop and stop a MySQL slave 
+# Simple script to stop and stop a MySQL slave
 # based on the age of a heartbeat time stamp
 # inserted on the master using mk-heartbeat from
 # maatkit.
 #
 # We use this technique rather than mk-slave-delay
 # since mk-slave-delay does not work well when replicating
-# from a fast host to a slow host and timings are 
+# from a fast host to a slow host and timings are
 # skewed.
 
 require 'rubygems'
@@ -18,6 +18,7 @@ require 'logger'
 options = {:lag => 3600,
            :user => 'nagios',
            :database => 'heartbeat',
+           :table => 'heartbeat',
            :host => "localhost",
            :password => "",
            :daemonize => false,
@@ -42,6 +43,10 @@ end
 
 parser.on('-u', '--user USER', 'User to connect as') do |f|
     options[:user] = f
+end
+
+parser.on('-t', '--table TABLE', 'Heartbeat table') do |f|
+    options[:table] = f
 end
 
 parser.on('-d', '--database DATABASE', 'Heartbeat database') do |f|
@@ -96,14 +101,14 @@ def manage_slave(options)
     itr = 0
 
     loop do
-        heartbeat = dbh.query("select unix_timestamp(now()) - unix_timestamp(ts) as seconds, ts from heartbeat").fetch_hash
+        heartbeat = dbh.query("select unix_timestamp(now()) - unix_timestamp(ts) as seconds, ts from #{options[:table]}").fetch_hash
         slave = dbh.query("show slave status").fetch_hash
         age = heartbeat["seconds"].to_i
-    
+
         @log.info("Slave currently #{age} seconds behind master desired lag is #{options[:lag]} seconds") if itr % 120 == 0
 
         if slave["Slave_SQL_Running"] == "Yes"
-            if age < options[:lag] 
+            if age < options[:lag]
                 @log.info "Slave running #{age} seconds behind: needs to stop"
                 dbh.query("stop slave SQL_THREAD")
             else
@@ -118,7 +123,7 @@ def manage_slave(options)
                 @log.debug "Slave stopped #{age} seconds behind: keeping it stopped"
             end
         end
-    
+
         itr += 1
         sleep options[:interval]
     end
