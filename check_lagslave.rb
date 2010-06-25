@@ -80,9 +80,9 @@ begin
 
         else
             if age < lowend
-                puts "CRITICAL: #{lowend - age} seconds faster than allowed|lag=#{age}"
+                puts "CRITICAL: #{lowend - age} seconds faster than allowed #{lowend} seconds|lag=#{age}"
             elsif age > highend
-                puts "CRITICAL: #{age - highend} seconds slower than allowed. |lag=#{age}"
+                puts "CRITICAL: #{age - highend} seconds slower than allowed #{highend} seconds|lag=#{age}"
             end
             STDOUT.flush
             exit! 2
