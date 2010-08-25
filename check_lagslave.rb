@@ -15,6 +15,7 @@ options = {:user => 'nagios',
            :password => "",
            :mode => :nagios,
            :logfile => "/dev/stdout",
+           :check_threads => false,
            :range => "39600:46800" }#Plus/minus one hour for a default lag of 12 hours.
 
 parser = OptionParser.new
@@ -37,6 +38,10 @@ end
 
 parser.on('-h', '--host HOST', 'Host to connect to') do |f|
     options[:host] = f
+end
+
+parser.on('--threads', 'Check the slave threads as well as ranges') do |f|
+    options[:check_threads] = true
 end
 
 parser.on('-p', '--password PASSWORD', 'Password to use') do |f|
@@ -73,6 +78,20 @@ begin
     range = Range.new(rng[0].to_i, rng[1].to_i)
 
     if options[:mode] == :nagios
+        # First we check the threads, just exit critical if those are down
+        if options[:check_threads]
+            replication = dbh.query("show slave status").fetch_hash
+            io_thread = replication["Slave_IO_Running"]
+            sql_thread = replication["Slave_SQL_Running"]
+
+            unless io_thread == "Yes" && sql_thread == "Yes"
+                puts "CRITICAL: IO Thread: #{io_thread} SQL Thread: #{sql_thread}"
+                STDOUT.flush
+                exit! 2
+            end
+        end
+
+        # Now check the ages
         if range.include?(age)
             puts "OK: #{age} is between Max:#{rng[1]} and Min:#{rng[0]}|lag=#{age}"
             STDOUT.flush
