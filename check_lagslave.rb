@@ -81,6 +81,9 @@ begin
         # First we check the threads, just exit critical if those are down
         if options[:check_threads]
             replication = dbh.query("show slave status").fetch_hash
+
+            raise "Database does not appear to be configured as a slave" if replication.nil?
+
             io_thread = replication["Slave_IO_Running"]
             sql_thread = replication["Slave_SQL_Running"]
 
